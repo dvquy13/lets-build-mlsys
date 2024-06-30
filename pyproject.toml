@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "lets-build-mlsys"
+version = "0.1.0"
+description = ""
+authors = ["Quy Dinh <quy.dinh3195@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pandas = "^2.2.2"
+scikit-learn = "*"
+
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^4.2.3"
+ipywidgets = "^8.1.3"
+black = "^24.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
