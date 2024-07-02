@@ -9,6 +9,13 @@ readme = "README.md"
 python = "^3.9"
 pandas = "^2.2.2"
 scikit-learn = "*"
+openai = "^1.35.7"
+python-dotenv = "^1.0.1"
+
+# Download HuggingFace datasets via Pandas API
+pyarrow = "^16.1.0"
+fsspec = "^2024.6.1"
+huggingface-hub = "^0.23.4"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,1 +1,7 @@
+**/*-checkpoint.ipynb
+
 .venv/
+.env
+
+data/*
+!data/.gitkeep
