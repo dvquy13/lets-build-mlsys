@@ -24,6 +24,12 @@ datasets = "^2.16"
 # spacy is used to convert to IOB2 format
 spacy = "^3.7.5"
 
+# Needed for tutorial notebook: https://huggingface.co/learn/nlp-course/en/chapter7/2
+evaluate = "^0.4.2"
+transformers = {extras = ["sentencepiece"], version = "^4.42.3"}
+accelerate = "^0.32.0"
+seqeval = "^1.2.2"
+
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^4.2.3"
