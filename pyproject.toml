@@ -30,6 +30,7 @@ transformers = {extras = ["sentencepiece"], version = "^4.42.3"}
 accelerate = "^0.32.0"
 seqeval = "^1.2.2"
 ollama = "^0.2.1"
+loguru = "^0.7.2"
 
 
 [tool.poetry.group.dev.dependencies]

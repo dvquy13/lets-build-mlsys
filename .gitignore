@@ -1,4 +1,5 @@
 **/*-checkpoint.ipynb
+**/*.pyc
 
 .venv/
 .env
@@ -8,3 +9,5 @@ data/*
 
 notebooks/*
 !notebooks/*.ipynb
+
+**/*.log
