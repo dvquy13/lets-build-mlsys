@@ -469,42 +469,6 @@ Output:
 }
 
 ---
-Example 27:
-Input:
-[
-  {"text": "I wasn't too impressed with the salad bar, but the drinks were fine."}
-]
-
-Output:
-{
-  "7": {
-    "text": "I wasn't too impressed with the salad bar, but the drinks were fine.",
-    "entities": [
-      ["wasn't too impressed with the salad bar", "FOOD", 0.6, -0.5],
-      ["drinks were fine", "BEVERAGE", 0.7, 0.3]
-    ]
-  }
-}
-
----
-Example 28:
-Input:
-[
-  {"text": "The restrooms were clean, but the hand dryers didn't work well."}
-]
-
-Output:
-{
-  "8": {
-    "text": "The restrooms were clean, but the hand dryers didn't work well.",
-    "entities": [
-      ["restrooms were clean", "SERVICE", 0.7, 0.4],
-      ["hand dryers didn't work well", "SERVICE", 0.5, -0.5]
-    ]
-  }
-}
-
----
 Example 29:
 Input:
 [

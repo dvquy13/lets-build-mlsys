@@ -53,18 +53,42 @@ Output:
         options=dict(
             temperature=0,
             top_p=1,
+            # For some strange reasons setting `num_ctx` = 4096 or 1024 causes the model to return error output
+            num_ctx=2048,
+            num_predict=2048,
             frequency_penalty=0,
             presence_penalty=0
         ),
         format='json'
     )
+    logger.debug(f"{len(prompt)=} {response['prompt_eval_count']=}")
     output = response['response']
     try:
         output_json = json.loads(output)
+        response_metadata_fields = (
+            'total_duration',
+            'load_duration',
+            'prompt_eval_count',
+            'prompt_eval_duration',
+            'eval_count',
+            'eval_duration',
+        )
+        response_metadata = {
+            k: v for k, v in response.items() if k in response_metadata_fields
+        }
+        response_metadata = {
+            **response_metadata,
+            "num_chars_prompt": len(prompt),
+            "num_chars_system_prompt": len(system_prompt),
+        }
         (
             logger
             .opt(lazy=True)
-            .bind(input_texts=input_texts, llm_extracted=output)
+            .bind(
+                input_texts=input_texts,
+                llm_extracted=json.loads(output),
+                response_metdata=response_metadata,
+            )
             .debug('[OUTPUT] LLM Extracted successfully')
         )
         input_texts_texts = [e['text'] for e in input_texts]

@@ -538,42 +538,6 @@ Output:
   }
 }
 
----
-Example 31:
-Input:
-[
-  {"text": "I love this restaurant for the food, the ambience, everything! Will definitely come back"}
-]
-
-Output:
-{
-  "7": {
-    "text": "I love this restaurant for the food, the ambience, everything! Will definitely come back",
-    "entities": [
-      ["i love this restaurant for the food, the ambience, everything", "OVERALL", 0.9, 0.9],
-      ["i love this restaurant for the food", "FOOD", 0.9, 0.9],
-      ["i love this restaurant for the food, the ambience", "AMBIENCE", 0.9, 0.9],
-    ]
-  }
-}
-
----
-Example 32:
-Input:
-[
-  {"text": "What a terrible dining experience! Not recommended"}
-]
-
-Output:
-{
-  "7": {
-    "text": "What a terrible dining experience! Not recommended",
-    "entities": [
-      ["terrible dining experience", "OVERALL", 0.9, -0.8]
-    ]
-  }
-}
-
 --- EXAMPLE SECTION END ---
 
 Important!:
