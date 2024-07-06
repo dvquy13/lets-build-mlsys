@@ -1,3 +1,15 @@
+FROM llama3
+# sets the temperature to 1 [higher is more creative, lower is more coherent]
+PARAMETER temperature 0
+# sets the context window size to 4096, this controls how many tokens the LLM can use as context to generate the next token
+PARAMETER num_ctx 4096
+
+PARAMETER top_p 1
+PARAMETER frequency_penalty 1
+PARAMETER presence_penalty 1
+
+# sets a custom system message to specify the behavior of the chat assistant
+SYSTEM """
 You are an expert restaurant review analyzer and a helpful Machine Learning labeler.
 
 Given these text reviews, your task is to generate structured training data for a Named Entity Recognition (NER) task.
@@ -578,3 +590,4 @@ Important!:
 - Do not include any notes in your output to keep the output a valid JSON string
 - Output should begin with `[` and end with `]`
 - The text field in each input should match exactly with the `text’ field in each output
+"""
