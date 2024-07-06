@@ -26,11 +26,27 @@ logger.add(
 )
 
 
+class ExtractedEntityNotInText(Exception):
+    pass
+
+
+class InputOutputTextsNotSimilar(Exception):
+    pass
+
+
 def assert_extracted_entity_is_subtext(output_json: Dict) -> None:
     for output in output_json.values():
         text = output['text']
         for entity in output['entities']:
-            assert entity[0].lower() in text.lower(), f"extracted entity '{entity[0]}' not in text '{text}'"
+            if entity[0].lower() not in text.lower():
+                raise ExtractedEntityNotInText(f"extracted entity '{entity[0]}' not in text '{text}'")
+
+
+def assert_similar_input_output_texts(input_texts, output_json):
+    input_texts_texts = [e['text'] for e in input_texts]
+    output_json_texts = [e['text'] for e in output_json.values()]
+    if set(input_texts_texts) != set(output_json_texts):
+        raise InputOutputTextsNotSimilar("Input texts do not match output texts")
 
 
 def llm_extract(input_texts: List[Dict], system_prompt: str) -> Dict:
@@ -91,11 +107,9 @@ Output:
             )
             .debug('[OUTPUT] LLM Extracted successfully')
         )
-        input_texts_texts = [e['text'] for e in input_texts]
-        output_json_texts = [e['text'] for e in output_json.values()]
-        assert set(input_texts_texts) == set(output_json_texts), "Input texts do not match output texts"
+        assert_similar_input_output_texts(input_texts, output_json)
         assert_extracted_entity_is_subtext(output_json)
-    except json.decoder.JSONDecodeError:
+    except Exception as e:
         error_msg = f"[COLLECT] {traceback.format_exc()}"
         (
             logger
@@ -103,7 +117,7 @@ Output:
             .bind(
                 input_texts=input_texts,
                 llm_extracted=output,
-                error_type='JSONOutputFormatError'
+                error_type=e.__class__.__name__
             )
             .error(error_msg)
         )
