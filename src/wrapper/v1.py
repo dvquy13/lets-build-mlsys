@@ -25,28 +25,31 @@ logger.add(
     serialize=True
 )
 
+
+def assert_extracted_entity_is_subtext(output_json: Dict) -> None:
+    for output in output_json.values():
+        text = output['text']
+        for entity in output['entities']:
+            assert entity[0].lower() in text.lower(), f"extracted entity '{entity[0]}' not in text '{text}'"
+
+
 def llm_extract(input_texts: List[Dict], system_prompt: str) -> Dict:
     """
     Params:
         input_texts (List[Dict]): contains keys `id` (str) and `text`
     """
     prompt = """
-    Input:
-    {input_texts}
-    """
+Input:
+{input_texts}
 
-    response = log_time(printer=logger.debug, method_name='call_llm')(client.chat)(
+Output:
+"""
+    prompt = prompt.format(input_texts=str(input_texts))
+
+    response = log_time(printer=logger.debug, method_name='call_llm')(client.generate)(
         model='llama3',
-        messages=[
-            {
-              "role": "system",
-              "content": system_prompt
-            },
-            {
-              "role": "user",
-              "content": prompt.format(input_texts=str(input_texts))
-            }
-        ],
+        prompt=prompt,
+        system=system_prompt,
         options=dict(
             temperature=0,
             num_predict=1024,
@@ -56,7 +59,7 @@ def llm_extract(input_texts: List[Dict], system_prompt: str) -> Dict:
         ),
         format='json'
     )
-    output = response['message']['content']
+    output = response['response']
     try:
         output_json = json.loads(output)
         (
@@ -68,6 +71,7 @@ def llm_extract(input_texts: List[Dict], system_prompt: str) -> Dict:
         input_texts_texts = [e['text'] for e in input_texts]
         output_json_texts = [e['text'] for e in output_json.values()]
         assert set(input_texts_texts) == set(output_json_texts), "Input texts do not match output texts"
+        assert_extracted_entity_is_subtext(output_json)
     except json.decoder.JSONDecodeError:
         error_msg = f"[COLLECT] {traceback.format_exc()}"
         (

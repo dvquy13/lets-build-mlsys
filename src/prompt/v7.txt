@@ -1,0 +1,192 @@
+You are a helpful expert Machine Learning annotator.
+
+Given these text reviews, your task is to generate structured training data for a Named Entity Recognition (NER) task.
+
+Requirements:
+- Entities are defined as the phrase or clause that contains a full statement mentioning a reviewed aspect.
+- List of useful aspects: FOOD, BEVERAGE, AMBIENCE, SERVICE, LOCATION, MUSIC, KITCHEN, PRICE, VIEW, GOOD_FOR
+- The extracted phrases/clauses should be the shortest possible while still containing enough information about the sentiment regarding the aspect.
+- The extracted phrases/clauses should be a subset of the input text.
+- The extracted phrases/clauses can be overlapping with each other.
+
+Output should strictly follow the JSON format of a dictionary where key is the id of the input element and each value is a dictionary containing the extracted data. Each value should follow this schema:
+- text (string): copy the corresponding text from the input
+- entities (list of lists): the extracted entities, where each entity contains:
+  + First element: the sub text
+  + Second element: the annotated aspect
+  + Confidence score (float): range from 0.01 to 0.99, denotes how confident you are about the annotations
+  + Sentiment (float): range from -1.0 to 1.0, where -1.0 is very negative and +1.0 is very positive
+
+--- EXAMPLE SECTION BEGIN ---
+
+---
+Example 1:
+Input:
+[
+  {"text": "But the staff was so horrible to us."},
+  {"text": "The food is uniformly exceptional, with a very capable kitchen which will proudly whip up whatever you feel like eating, whether it's on the menu or not."},
+  {"text": "I particularly love their yellowfin tuna and their mussel selection."},
+  {"text": "The ambiance of the restaurant was very soothing and calming."},
+  {"text": "Their wine selection is impressive, offering a variety of rare bottles."},
+  {"text": "I found the prices to be a bit on the higher side."},
+  {"text": "The restaurant offers a stunning view of the city skyline."},
+  {"text": "It's a great place for family dinners."},
+  {"text": "I didn't enjoy the music, it was too loud."},
+  {"text": "The restaurant's location is very convenient, close to the subway."}
+]
+
+Output:
+{
+  "1": {
+    "text": "But the staff was so horrible to us.",
+    "entities": [
+      ["staff was so horrible", "SERVICE", 0.99, -0.9]
+    ]
+  },
+  "2": {
+    "text": "The food is uniformly exceptional, with a very capable kitchen which will proudly whip up whatever you feel like eating, whether it's on the menu or not.",
+    "entities": [
+      ["food is uniformly exceptional", "FOOD", 0.99, 0.9],
+      ["very capable kitchen", "KITCHEN", 0.99, 0.8]
+    ]
+  },
+  "3": {
+    "text": "I particularly love their yellowfin tuna and their mussel selection.",
+    "entities": [
+      ["love their yellowfin tuna", "FOOD", 0.9, 0.8],
+      ["love their yellowfin tuna and their mussel selection", "FOOD", 0.8, 0.7]
+    ]
+  },
+  "4": {
+    "text": "The ambiance of the restaurant was very soothing and calming.",
+    "entities": [
+      ["ambiance of the restaurant was very soothing", "AMBIENCE", 0.95, 0.85]
+    ]
+  },
+  "5": {
+    "text": "Their wine selection is impressive, offering a variety of rare bottles.",
+    "entities": [
+      ["wine selection is impressive", "BEVERAGE", 0.95, 0.8]
+    ]
+  },
+  "6": {
+    "text": "I found the prices to be a bit on the higher side.",
+    "entities": [
+      ["prices to be a bit on the higher side", "PRICE", 0.9, -0.4]
+    ]
+  },
+  "7": {
+    "text": "The restaurant offers a stunning view of the city skyline.",
+    "entities": [
+      ["stunning view of the city skyline", "VIEW", 0.98, 0.9]
+    ]
+  },
+  "8": {
+    "text": "It's a great place for family dinners.",
+    "entities": [
+      ["great place for family dinners", "GOOD_FOR", 0.95, 0.85]
+    ]
+  },
+  "9": {
+    "text": "I didn't enjoy the music, it was too loud.",
+    "entities": [
+      ["didn't enjoy the music", "MUSIC", 0.85, -0.7]
+    ]
+  },
+  "10": {
+    "text": "The restaurant's location is very convenient, close to the subway.",
+    "entities": [
+      ["location is very convenient", "LOCATION", 0.92, 0.7]
+    ]
+  }
+}
+
+---
+Example 2:
+Input:
+[
+  {"text": "The service was quick and friendly."},
+  {"text": "I loved the elegant interior design of the restaurant."},
+  {"text": "The pasta dishes are absolutely delicious and well worth the price."},
+  {"text": "They have an extensive cocktail menu with unique creations."},
+  {"text": "It's a perfect spot for romantic dates."},
+  {"text": "The live music added a great touch to the evening."},
+  {"text": "Their desserts are to die for."},
+  {"text": "The restaurant is located in a busy part of town, making it easily accessible."},
+  {"text": "The kitchen was slow in preparing our meals."},
+  {"text": "We enjoyed the panoramic view from the rooftop terrace."}
+]
+
+Output:
+{
+  "1": {
+    "text": "The service was quick and friendly.",
+    "entities": [
+      ["service was quick and friendly", "SERVICE", 0.98, 0.9]
+    ]
+  },
+  "2": {
+    "text": "I loved the elegant interior design of the restaurant.",
+    "entities": [
+      ["loved the elegant interior design", "AMBIENCE", 0.9, 0.8]
+    ]
+  },
+  "3": {
+    "text": "The pasta dishes are absolutely delicious and well worth the price.",
+    "entities": [
+      ["pasta dishes are absolutely delicious", "FOOD", 0.95, 0.85],
+      ["well worth the price", "PRICE", 0.85, 0.7]
+    ]
+  },
+  "4": {
+    "text": "They have an extensive cocktail menu with unique creations.",
+    "entities": [
+      ["extensive cocktail menu", "BEVERAGE", 0.9, 0.75]
+    ]
+  },
+  "5": {
+    "text": "It's a perfect spot for romantic dates.",
+    "entities": [
+      ["perfect spot for romantic dates", "GOOD_FOR", 0.9, 0.85]
+    ]
+  },
+  "6": {
+    "text": "The live music added a great touch to the evening.",
+    "entities": [
+      ["live music added a great touch", "MUSIC", 0.88, 0.8]
+    ]
+  },
+  "7": {
+    "text": "Their desserts are to die for.",
+    "entities": [
+      ["desserts are to die for", "FOOD", 0.95, 0.9]
+    ]
+  },
+  "8": {
+    "text": "The restaurant is located in a busy part of town, making it easily accessible.",
+    "entities": [
+      ["located in a busy part of town", "LOCATION", 0.9, 0.7],
+      ["easily accessible", "LOCATION", 0.85, 0.6]
+    ]
+  },
+  "9": {
+    "text": "The kitchen was slow in preparing our meals.",
+    "entities": [
+      ["kitchen was slow in preparing", "KITCHEN", 0.8, -0.6]
+    ]
+  },
+  "10": {
+    "text": "We enjoyed the panoramic view from the rooftop terrace.",
+    "entities": [
+      ["panoramic view from the rooftop terrace", "VIEW", 0.9, 0.85]
+    ]
+  }
+}
+
+--- EXAMPLE SECTION END ---
+
+
+Important!:
+- Do not include any notes in your output to keep the output is a valid JSON string.
+- Output should begin with `[` and end with `]`
+- The `text` field in each input should match exactly with the `text' field in each output
