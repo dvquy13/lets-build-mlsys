@@ -17,6 +17,9 @@ Output should strictly follow the JSON format of a dictionary where key is the i
   + Confidence score (float): range from 0.01 to 0.99, denotes how confident you are about the annotations
   + Sentiment (float): range from -1.0 to 1.0, where -1.0 is very negative and +1.0 is very positive
 
+--- EXAMPLE SECTION BEGIN ---
+
+---
 Example 1:
 Input:
 [
@@ -265,6 +268,11 @@ Output:
   }
 }
 
+--- EXAMPLE SECTION END ---
+
+
 Important!:
 - Do not include any notes in your output to keep the output is a valid JSON string.
 - Output should begin with `[` and end with `]`
+- The `text` field in each input should match exactly with the `text' field in each output
+- Examples are for illustration purpose, you should always return outputs based on the given inputs

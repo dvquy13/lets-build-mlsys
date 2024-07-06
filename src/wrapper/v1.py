@@ -13,7 +13,7 @@ LLM_SERVER_PORT = 11434
 client = Client(host=f'http://{LLM_SERVER_HOST}:{LLM_SERVER_PORT}')
 
 logger.add(
-    "llm_extract_output_{time}.log",
+    "llm_extract_output_{time}.jsonl",
     filter=lambda record: "[OUTPUT]" in record["message"],
     level="DEBUG",
     serialize=True
@@ -59,9 +59,26 @@ def llm_extract(input_texts: List[Dict], system_prompt: str) -> Dict:
     output = response['message']['content']
     try:
         output_json = json.loads(output)
-        logger.opt(lazy=True).bind(llm_extracted=output).debug('[OUTPUT] LLM Extracted successfully')
+        (
+            logger
+            .opt(lazy=True)
+            .bind(input_texts=input_texts, llm_extracted=output)
+            .debug('[OUTPUT] LLM Extracted successfully')
+        )
+        input_texts_texts = [e['text'] for e in input_texts]
+        output_json_texts = [e['text'] for e in output_json.values()]
+        assert set(input_texts_texts) == set(output_json_texts), "Input texts do not match output texts"
     except json.decoder.JSONDecodeError:
         error_msg = f"[COLLECT] {traceback.format_exc()}"
-        logger.opt(lazy=True).bind(text=output, error_type='JSONOutputFormatError').error(error_msg)
+        (
+            logger
+            .opt(lazy=True)
+            .bind(
+                input_texts=input_texts,
+                llm_extracted=output,
+                error_type='JSONOutputFormatError'
+            )
+            .error(error_msg)
+        )
         output_json = {}
     return output_json
