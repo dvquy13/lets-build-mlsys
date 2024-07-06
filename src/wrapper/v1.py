@@ -34,12 +34,29 @@ class InputOutputTextsNotSimilar(Exception):
     pass
 
 
-def assert_extracted_entity_is_subtext(output_json: Dict) -> None:
-    for output in output_json.values():
+def filter_extracted_entity_is_subtext(output_json: Dict) -> None:
+    filterred_output_json = {}
+    for k, output in output_json.items():
         text = output['text']
+        append = True
         for entity in output['entities']:
             if entity[0].lower() not in text.lower():
-                raise ExtractedEntityNotInText(f"extracted entity '{entity[0]}' not in text '{text}'")
+                append = False
+                error_msg = f"[COLLECT] Extracted entity '{entity[0]}' not in text '{text}'"
+                (
+                    logger
+                    .opt(lazy=True)
+                    .bind(
+                        extracted_entity=entity[0],
+                        text=text,
+                        error_type='ExtractedEntityNotInText'
+                    )
+                    .error(error_msg)
+                )
+                output_json = {}
+        if append:
+            filterred_output_json[k] = output
+    return filterred_output_json
 
 
 def assert_similar_input_output_texts(input_texts, output_json):
@@ -77,7 +94,6 @@ Output:
         ),
         format='json'
     )
-    logger.debug(f"{len(prompt)=} {response['prompt_eval_count']=}")
     output = response['response']
     try:
         output_json = json.loads(output)
@@ -108,7 +124,7 @@ Output:
             .debug('[OUTPUT] LLM Extracted successfully')
         )
         assert_similar_input_output_texts(input_texts, output_json)
-        assert_extracted_entity_is_subtext(output_json)
+        output_json = filter_extracted_entity_is_subtext(output_json)
     except Exception as e:
         error_msg = f"[COLLECT] {traceback.format_exc()}"
         (
