@@ -1,0 +1,527 @@
+FROM llama3
+# sets the temperature to 1 [higher is more creative, lower is more coherent]
+PARAMETER temperature 0
+# sets the context window size to 4096, this controls how many tokens the LLM can use as context to generate the next token
+PARAMETER num_ctx 4096
+
+PARAMETER top_p 1
+PARAMETER frequency_penalty 1
+PARAMETER presence_penalty 1
+
+# sets a custom system message to specify the behavior of the chat assistant
+SYSTEM """
+You are an expert restaurant review analyzer and a helpful Machine Learning labeler.
+
+Given these text reviews, your task is to generate structured training data for a Named Entity Recognition (NER) task.
+
+Requirements:
+- Entities are defined as the phrase or clause that contains a full statement mentioning a reviewed aspect.
+- List of useful aspects: OVERALL, FOOD, BEVERAGE, AMBIENCE, SERVICE, LOCATION, MUSIC, KITCHEN, PRICE, VIEW, GOOD_FOR
+- The extracted phrases/clauses should be the shortest possible while still containing enough information about the sentiment regarding the aspect.
+- The extracted phrases/clauses should be a subset of the input text.
+- The extracted phrases/clauses can be overlapping with each other.
+
+Output should strictly follow the JSON format of a dictionary where key is the id of the input element and each value is a dictionary containing the extracted data. Each value should follow this schema:
+- text (string): copy the corresponding text from the input
+- entities (list of lists): the extracted entities, where each entity contains:
+  + First element: the sub text
+  + Second element: the annotated aspect
+  + Confidence score (float): range from 0.01 to 0.99, denotes how confident you are about the annotations
+  + Sentiment (float): range from -1.0 to 1.0, where -1.0 is very negative and +1.0 is very positive
+
+Important!:
+- Do not include any notes in your output to keep the output a valid JSON string
+- Output should begin with `[` and end with `]`
+- The text field in each input should match exactly with the `text’ field in each output
+"""
+
+# Set examples
+MESSAGE user """
+[
+  {"text": "But the staff was so horrible to us."}
+]
+"""
+MESSAGE assistant """
+{
+  "1": {
+    "text": "But the staff was so horrible to us.",
+    "entities": [
+      ["staff was so horrible", "SERVICE", 0.99, -0.9]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The food is uniformly exceptional, with a very capable kitchen which will proudly whip up whatever you feel like eating, whether it's on the menu or not."}
+]
+"""
+MESSAGE assistant """
+{
+  "2": {
+    "text": "The food is uniformly exceptional, with a very capable kitchen which will proudly whip up whatever you feel like eating, whether it's on the menu or not.",
+    "entities": [
+      ["food is uniformly exceptional", "FOOD", 0.99, 0.9],
+      ["very capable kitchen", "KITCHEN", 0.99, 0.8]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I particularly love their yellowfin tuna and their mussel selection."}
+]
+"""
+MESSAGE assistant """
+{
+  "3": {
+    "text": "I particularly love their yellowfin tuna and their mussel selection.",
+    "entities": [
+      ["love their yellowfin tuna", "FOOD", 0.9, 0.8],
+      ["love their yellowfin tuna and their mussel selection", "FOOD", 0.8, 0.7]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The ambiance of the restaurant was very soothing and calming."}
+]
+"""
+MESSAGE assistant """
+{
+  "4": {
+    "text": "The ambiance of the restaurant was very soothing and calming.",
+    "entities": [
+      ["ambiance of the restaurant was very soothing", "AMBIENCE", 0.95, 0.85]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "Their wine selection is impressive, offering a variety of rare bottles."}
+]
+"""
+MESSAGE assistant """
+{
+  "5": {
+    "text": "Their wine selection is impressive, offering a variety of rare bottles.",
+    "entities": [
+      ["wine selection is impressive", "BEVERAGE", 0.95, 0.8]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I found the prices to be a bit on the higher side."}
+]
+"""
+MESSAGE assistant """
+{
+  "6": {
+    "text": "I found the prices to be a bit on the higher side.",
+    "entities": [
+      ["prices to be a bit on the higher side", "PRICE", 0.9, -0.4]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The restaurant offers a stunning view of the city skyline."}
+]
+"""
+MESSAGE assistant """
+{
+  "7": {
+    "text": "The restaurant offers a stunning view of the city skyline.",
+    "entities": [
+      ["stunning view of the city skyline", "VIEW", 0.98, 0.9]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "It's a great place for family dinners."}
+]
+"""
+MESSAGE assistant """
+{
+  "8": {
+    "text": "It's a great place for family dinners.",
+    "entities": [
+      ["great place for family dinners", "GOOD_FOR", 0.95, 0.85]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I didn't enjoy the music, it was too loud."}
+]
+"""
+MESSAGE assistant """
+{
+  "9": {
+    "text": "I didn't enjoy the music, it was too loud.",
+    "entities": [
+      ["didn't enjoy the music", "MUSIC", 0.85, -0.7]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The restaurant's location is very convenient, close to the subway."}
+]
+"""
+MESSAGE assistant """
+{
+  "10": {
+    "text": "The restaurant's location is very convenient, close to the subway.",
+    "entities": [
+      ["location is very convenient", "LOCATION", 0.92, 0.7]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The service was quick and friendly."}
+]
+"""
+MESSAGE assistant """
+{
+  "1": {
+    "text": "The service was quick and friendly.",
+    "entities": [
+      ["service was quick and friendly", "SERVICE", 0.98, 0.9]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I loved the elegant interior design of the restaurant."}
+]
+"""
+MESSAGE assistant """
+{
+  "2": {
+    "text": "I loved the elegant interior design of the restaurant.",
+    "entities": [
+      ["loved the elegant interior design", "AMBIENCE", 0.9, 0.8]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The pasta dishes are absolutely delicious and well worth the price."}
+]
+"""
+MESSAGE assistant """
+{
+  "3": {
+    "text": "The pasta dishes are absolutely delicious and well worth the price.",
+    "entities": [
+      ["pasta dishes are absolutely delicious", "FOOD", 0.95, 0.85],
+      ["well worth the price", "PRICE", 0.85, 0.7]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "They have an extensive cocktail menu with unique creations."}
+]
+"""
+MESSAGE assistant """
+{
+  "4": {
+    "text": "They have an extensive cocktail menu with unique creations.",
+    "entities": [
+      ["extensive cocktail menu", "BEVERAGE", 0.9, 0.75]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "It's a perfect spot for romantic dates."}
+]
+"""
+MESSAGE assistant """
+{
+  "5": {
+    "text": "It's a perfect spot for romantic dates.",
+    "entities": [
+      ["perfect spot for romantic dates", "GOOD_FOR", 0.9, 0.85]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The live music added a great touch to the evening."}
+]
+"""
+MESSAGE assistant """
+{
+  "6": {
+    "text": "The live music added a great touch to the evening.",
+    "entities": [
+      ["live music added a great touch", "MUSIC", 0.88, 0.8]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "Their desserts are to die for."}
+]
+"""
+MESSAGE assistant """
+{
+  "7": {
+    "text": "Their desserts are to die for.",
+    "entities": [
+      ["desserts are to die for", "FOOD", 0.95, 0.9]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The restaurant is located in a busy part of town, making it easily accessible."}
+]
+"""
+MESSAGE assistant """
+{
+  "8": {
+    "text": "The restaurant is located in a busy part of town, making it easily accessible.",
+    "entities": [
+      ["located in a busy part of town", "LOCATION", 0.9, 0.7],
+      ["easily accessible", "LOCATION", 0.85, 0.6]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The kitchen was slow in preparing our meals."}
+]
+"""
+MESSAGE assistant """
+{
+  "9": {
+    "text": "The kitchen was slow in preparing our meals.",
+    "entities": [
+      ["kitchen was slow in preparing", "KITCHEN", 0.8, -0.6]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "We enjoyed the panoramic view from the rooftop terrace."}
+]
+"""
+MESSAGE assistant """
+{
+  "10": {
+    "text": "We enjoyed the panoramic view from the rooftop terrace.",
+    "entities": [
+      ["panoramic view from the rooftop terrace”, “VIEW”, 0.9, 0.85]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The seating arrangement could be better."}
+]
+"""
+MESSAGE assistant """
+{
+  "1": {
+    "text": "The seating arrangement could be better.",
+    "entities": [
+      ["seating arrangement could be better", "AMBIENCE", 0.6, -0.3]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I felt the lighting was a bit too dim for my liking."}
+]
+"""
+MESSAGE assistant """
+{
+  "2": {
+    "text": "I felt the lighting was a bit too dim for my liking.",
+    "entities": [
+      ["lighting was a bit too dim", "AMBIENCE", 0.5, -0.4]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The waiting time was not great but the food was decent."}
+]
+"""
+MESSAGE assistant """
+{
+  "3": {
+    "text": "The waiting time was not great but the food was decent.",
+    "entities": [
+      ["waiting time was not great", "SERVICE", 0.5, -0.5],
+      ["food was decent", "FOOD", 0.7, 0.3]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The decor is quite old-fashioned and could use some updates."}
+]
+"""
+MESSAGE assistant """
+{
+  "4": {
+    "text": "The decor is quite old-fashioned and could use some updates.",
+    "entities": [
+      ["decor is quite old-fashioned", "AMBIENCE", 0.4, -0.4],
+      ["could use some updates", "AMBIENCE", 0.6, -0.2]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I think the desserts were okay, not the best."}
+]
+"""
+MESSAGE assistant """
+{
+  "5": {
+    "text": "I think the desserts were okay, not the best.",
+    "entities": [
+      ["desserts were okay", "FOOD", 0.6, 0.1],
+      ["not the best", "FOOD", 0.5, -0.3]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The noise level was quite high, making it hard to have a conversation."}
+]
+"""
+MESSAGE assistant """
+{
+  "6": {
+    "text": "The noise level was quite high, making it hard to have a conversation.",
+    "entities": [
+      ["noise level was quite high", "AMBIENCE", 0.6, -0.6]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I wasn't too impressed with the salad bar, but the drinks were fine."}
+]
+"""
+MESSAGE assistant """
+{
+  "7": {
+    "text": "I wasn't too impressed with the salad bar, but the drinks were fine.",
+    "entities": [
+      ["wasn't too impressed with the salad bar", "FOOD", 0.6, -0.5],
+      ["drinks were fine", "BEVERAGE", 0.7, 0.3]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The restrooms were clean, but the hand dryers didn't work well."}
+]
+"""
+MESSAGE assistant """
+{
+  "8": {
+    "text": "The restrooms were clean, but the hand dryers didn't work well.",
+    "entities": [
+      ["restrooms were clean", "SERVICE", 0.7, 0.4],
+      ["hand dryers didn't work well", "SERVICE", 0.5, -0.5]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The view from the window wasn't as good as I expected."}
+]
+"""
+MESSAGE assistant """
+{
+  "9": {
+    "text": "The view from the window wasn't as good as I expected.",
+    "entities": [
+      ["view from the window wasn't as good", "VIEW", 0.4, -0.4]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "The ambiance is neither good nor bad, just average."}
+]
+"""
+MESSAGE assistant """
+{
+  "10": {
+    "text": "The ambiance is neither good nor bad, just average.",
+    "entities": [
+      ["ambiance is neither good nor bad", "AMBIENCE", 0.3, 0.0]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "I love this restaurant for the food, the ambience, everything! Will definitely come back"}
+]
+"""
+MESSAGE assistant """
+{
+  "7": {
+    "text": "I love this restaurant for the food, the ambience, everything! Will definitely come back",
+    "entities": [
+      ["I love this restaurant for the food, the ambience, everything! Will definitely come back", "OVERALL", 0.9, 0.9]
+    ]
+  }
+}
+"""
+MESSAGE user """
+[
+  {"text": "What a terrible dining experience! Not recommended"}
+]
+"""
+MESSAGE assistant """
+{
+  "7": {
+    "text": "What a terrible dining experience! Not recommended",
+    "entities": [
+      ["terrible dining experience! Not recommended", "OVERALL", 0.9, -0.8]
+    ]
+  }
+}
+"""
