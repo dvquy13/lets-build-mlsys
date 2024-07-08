@@ -1,5 +1,6 @@
 **/*-checkpoint.ipynb
 **/*.pyc
+.vscode/
 
 .venv/
 .env
