@@ -11,3 +11,5 @@ notebooks/*
 !notebooks/*.ipynb
 
 **/*.log
+
+label-studio/mydata
