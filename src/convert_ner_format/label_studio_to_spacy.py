@@ -112,7 +112,7 @@ def convert_label_studio_to_spacy_format(source_data):
         text_data = {
             "id": str(deterministic_hash(text)),
             "text": text,
-            "labels": labels,
+            "label": labels,
             "Comments": [],
         }
 

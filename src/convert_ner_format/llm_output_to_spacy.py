@@ -1,6 +1,10 @@
+from loguru import logger
+
 from src.utils.id.idfy import deterministic_hash
+from src.utils.time.timer import log_time
 
 
+@log_time(printer=logger.info)
 def convert_from_llm_output_to_spacy(llm_output):
     """
     LLM output format:
@@ -38,11 +42,20 @@ def convert_from_llm_output_to_spacy(llm_output):
     """
     spacy_data = []
     for item in llm_output:
-        item = list(item.values())[0]
-        text = item['text']
-        entities = item['entities']
+        text = item["text"]
+        entities = item["entities"]
         labels = []
         for entity in entities:
+            if not isinstance(entity, list) or len(entity) != 4:
+                logger.error(
+                    "\n".join(
+                        [
+                            f"Entity should be a list like ['text', 'label', confidence_score, sentiment_score]",
+                            f"Observed {entity=} in {entities=} in {text=}",
+                        ]
+                    )
+                )
+                continue
             entity_text = entity[0]
             entity_label = entity[1]
             start_idx = text.find(entity_text)
@@ -53,7 +66,7 @@ def convert_from_llm_output_to_spacy(llm_output):
             "id": str(deterministic_hash(text)),
             "text": text,
             "label": labels,
-            "Comments": []
+            "Comments": [],
         }
         spacy_data.append(spacy_item)
     return spacy_data
