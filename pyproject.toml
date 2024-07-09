@@ -14,8 +14,8 @@ openai = "^1.35.7"
 python-dotenv = "^1.0.1"
 
 # Download HuggingFace datasets via Pandas API
+pyarrow = "*"
 # Issue with load_dataset so need to fix fsspec: https://stackoverflow.com/a/77433141/7456751
-pyarrow = "^16.1.0"
 fsspec = "2023.9.2"
 huggingface-hub = "^0.23.4"
 # HuggingFace datasets
@@ -32,6 +32,8 @@ seqeval = "^1.2.2"
 ollama = "^0.2.1"
 loguru = "^0.7.2"
 
+# MLflow
+mlflow = "2.14.1"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^4.2.3"
