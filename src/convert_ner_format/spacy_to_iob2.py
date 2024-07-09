@@ -70,3 +70,12 @@ def build_ner_tags_label(iob2_data):
     ner_tags_label = sorted(list(ner_tags_set), key=key_sort_ner_tags)
     ner_tags_label.insert(0, "O")
     return ner_tags_label
+
+
+def convert_tags_to_int(iob2_data, mapper):
+    for output in iob2_data:
+        new_ner_tags = []
+        for t in output["ner_tags"]:
+            new_ner_tags.append(mapper[t])
+        output["ner_tags"] = new_ner_tags
+    return iob2_data
